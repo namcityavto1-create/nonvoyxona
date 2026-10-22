@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="uz"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nonvoyxona hisobi</title>
+<style>
+:root{--bg:#FBF6EE;--card:#fff;--ink:#2B1D12;--mut:#6B5A4A;--line:#E6D9C6;--acc:#9A5314;--in:#FBF6EE;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1D1610;--card:#2A2018;--ink:#F5EBDD;--mut:#BFAE9A;--line:#44362A;--acc:#E0914A;--in:#1D1610}}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Manrope,system-ui,-apple-system,"Segoe UI",sans-serif}
+#v{max-width:480px;margin:0 auto;padding:16px 16px 40px}
+h1{font-size:22px;margin:8px 0 4px}h2{font-size:16px;margin:18px 0 8px}
+.c{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+button,input,select{font:inherit;color:var(--ink)}
+button{min-height:44px;border-radius:12px;border:1px solid var(--line);background:var(--card);font-weight:700;padding:0 14px}
+.p{background:var(--acc);border-color:var(--acc);color:#fff;width:100%;min-height:52px;font-size:16px;margin-top:12px}
+.p.d{color:#1D1610}
+.w{display:block;width:100%;text-align:left;margin-bottom:8px;min-height:56px;font-size:17px}
+.w small{color:var(--mut);font-weight:500;margin-left:6px}
+input,select{height:44px;box-sizing:border-box;border:2px solid var(--line);border-radius:12px;background:var(--in);padding:0 10px}
+.r{display:flex;align-items:center;gap:6px;padding:8px 10px;border-top:1px solid var(--line)}
+.r input{width:72px;text-align:center;font-weight:800;font-size:17px}
+.r .n{border-color:var(--acc)}.r span{flex:1;color:var(--mut);font-size:14px}
+.r button{width:44px;padding:0;font-size:20px}
+.tabs{display:flex;gap:8px;margin:12px 0}.tabs{flex-wrap:wrap}.tabs button{flex:1;min-width:30%;padding:0 4px;font-size:14px}.tabs .on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+table{width:100%;border-collapse:collapse}td,th{padding:10px 12px;text-align:right;border-top:1px solid var(--line)}th{color:var(--mut);font-size:12px;font-weight:600}td:first-child,th:first-child{text-align:left}
+.top{display:flex;justify-content:space-between;align-items:center}.m{color:var(--mut);font-size:13px}
+#t{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:12px;font-weight:700;display:none}
+.add{display:flex;gap:8px;margin-top:12px}.add input{flex:1;min-width:0}
+</style>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+/* FIREBASE SOZLAMALARI: Firebase konsolidan nusxalab shu yerga qo'ying */
+const FB={apiKey:"AIzaSyA6MfF4U-9zMyD3OJu2ZZoq1RVZDzN64B4",authDomain:"nonvoyxona-3651c.firebaseapp.com",projectId:"nonvoyxona-3651c",storageBucket:"nonvoyxona-3651c.firebasestorage.app",messagingSenderId:"304549374321",appId:"1:304549374321:web:9eba4cf9a3bffa8453eed0"};
+</script>
+</head><body><div id="v"></div><div id="t" role="status"></div>
+<script>
+const $=s=>document.querySelector(s);
+const SIZES=[290,320,460,520,620,750,800,1000,1200];
+const today=new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
+let db=null,workers=[],prod=[],me=null,items=[],qop=0,prices={},exps=[],flour=[],pend=null,ownerH=null,ownerReady=false,tab="enter";
+try{me=JSON.parse(localStorage.getItem("me")||"null")}catch(e){}if(me&&me.role=="Egasi")me=null;
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const ROLES=["Xamirkash-zuvalakash","Chekuvchi","Yopuvchi","Egasi"];
+const OTH=["Chekuvchi","Yopuvchi"];
+const canProd=()=>me.role!="Egasi"&&!OTH.includes(me.role);
+const showSum=()=>!OTH.includes(me.role);
+const startTab=()=>me.role=="Egasi"?"sum":canProd()?"enter":"exp";
+function mine(){return me&&prod.find(p=>p.id===today+"_"+me.id)}
+function startItems(){const p=mine();items=p&&p.items.length?p.items.map(x=>({...x})):SIZES.map(g=>({g,n:0}));qop=p?p.qop||0:0}
+function toast(m){const t=$("#t");t.textContent=m;t.style.display="block";setTimeout(()=>t.style.display="none",1800)}
+function pwv(){const first=!ownerH;return `<h1>${esc(pend.name)}</h1><div class="m">${first?"Birinchi marta: yangi parol o’ylab toping":"Parolni kiriting"}</div><div class="add"><input id="pw" type="password" autocomplete="off" placeholder="Parol" aria-label="Parol"></div><button class="p" data-act="pwok">${first?"Parolni saqlash va kirish":"Kirish"}</button><button class="w" style="margin-top:12px" data-act="pwno">Orqaga</button>`}
+async function sha(s){const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode("nonvoyxona:"+s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}
+function login(){if(pend)return pwv();return `<h1>Nonvoyxona hisobi</h1><div class="m">Ismingizni tanlang</div><h2></h2>`+
+ (workers.length?workers.map(w=>`<button class="w" data-act="pick" data-id="${esc(w.id)}">${esc(w.name)}<small>${esc(w.role)}</small></button>`).join(""):`<div class="m">Hali xodim yo’q. Pastdan qo’shing.</div>`)+
+ `<h2>Yangi xodim</h2><div class="add"><input id="nm" placeholder="Ismi" aria-label="Ismi"><select id="rl" aria-label="Roli">${ROLES.filter(r=>r!="Egasi"||!workers.some(w=>w.role=="Egasi")).map(r=>`<option>${r}</option>`).join("")}</select></div><button class="p" data-act="addw">+ Xodim qo’shish</button>`}
+function head(){return `<div class="top"><div><h1>${esc(me.name)}</h1><div class="m">${esc(me.role)} · ${today}</div></div><button data-act="out">Chiqish</button></div><div class="tabs">${!canProd()?"":`<button data-act="tab" data-t="enter" class="${tab=="enter"?"on":""}">Kiritish</button>`}<button data-act="tab" data-t="exp" class="${tab=="exp"?"on":""}">Xarajat</button>${showSum()?`<button data-act="tab" data-t="sum" class="${tab=="sum"?"on":""}">Bugungi jami</button>`:""}${me.role=="Egasi"?`<button data-act="tab" data-t="wg" class="${tab=="wg"?"on":""}">Ish haqi</button><button data-act="tab" data-t="un" class="${tab=="un"?"on":""}">Un</button><button data-act="tab" data-t="pr" class="${tab=="pr"?"on":""}">Narxlar</button>`:""}</div>`}
+function qopv(){return `<div class="c" style="padding:20px;text-align:center"><div class="m">Bugun necha qop xamir qildingiz?</div><div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-top:14px"><button data-act="qd" style="width:60px;min-height:60px;font-size:28px;padding:0" aria-label="Kamaytirish">−</button><input id="qop" inputmode="numeric" value="${qop}" aria-label="Qop soni" style="width:110px;height:60px;font-size:32px;text-align:center;font-weight:800;border-color:var(--acc)"><button data-act="qi" style="width:60px;min-height:60px;font-size:28px;padding:0" aria-label="Ko’paytirish">+</button></div><div class="m" style="margin-top:8px">qop</div></div><h2>Zuvala (gramm bo’yicha)</h2>`}
+function enter(){return qopv()+`<div class="c"><div class="r" style="border:0"><span class="m" style="flex:none;width:120px">Gramm (gr)</span><span class="m" style="text-align:right">Nechta zuvala</span></div>`+
+ items.map((x,i)=>`<div class="r" data-i="${i}"><input class="g" inputmode="numeric" value="${x.g||""}" aria-label="Gramm"><button data-act="delr" aria-label="Qatorni o’chirish" style="width:40px;margin-right:auto;color:var(--mut)">×</button><button data-act="dec" aria-label="Kamaytirish">−</button><input class="n" inputmode="numeric" value="${x.n}" aria-label="Soni"><button data-act="inc" aria-label="Ko’paytirish">+</button></div>`).join("")+
+ `<button data-act="row" style="width:100%;border:0;border-top:1px solid var(--line);border-radius:0;color:var(--acc)">+ Yangi gramm qo’shish</button></div><h2 style="display:flex;justify-content:space-between"><span>Jami</span><span id="tot">0 dona</span></h2><button class="p" data-act="save">Saqlash</button>`}
+function sum(){const t=prod.filter(p=>p.date===today);if(!t.length)return `<div class="m">Bugun hali hech kim kiritmagan.</div>`;
+ const X=t.filter(p=>p.role!="Egasi"),Z=X;
+ const qopT=X.reduce((a,p)=>a+(p.qop||0),0),all=Z.flatMap(p=>p.items);
+ const gs=[...new Set(all.map(x=>x.g))].sort((a,b)=>a-b);
+ const zt=all.reduce((a,x)=>a+x.n,0),kg=all.reduce((a,x)=>a+x.g*x.n,0)/1000;
+ return `<h2 style="margin-top:4px">Xamir</h2><div class="c"><div class="r"><span style="color:var(--ink)"><b>Jami</b></span><b>${qopT} qop</b></div>`+X.map(p=>`<div class="r"><span style="color:var(--ink)">${esc(p.name)}</span><b>${p.qop||0} qop</b></div>`).join("")+`</div><h2>Zuvala</h2><div class="c"><table><tr><th>Gramm</th><th>Zuvala soni</th></tr>`+gs.map(g=>`<tr><td>${g} gr</td><td>${Z.reduce((a,p)=>a+p.items.filter(x=>x.g==g).reduce((b,x)=>b+x.n,0),0)}</td></tr>`).join("")+`<tr><td><b>Jami</b></td><td><b>${zt}</b></td></tr><tr><td>Xamir og’irligi</td><td>${kg.toFixed(1)} kg</td></tr></table></div>`+(Z.length?`<h2>Kim nechta uzdi</h2><div class="c">`+Z.map(p=>`<div class="r"><span style="color:var(--ink)"><b>${esc(p.name)}</b></span><b>${p.items.reduce((a,x)=>a+x.n,0)} zuvala</b></div>`).join("")+`</div>`:"")}
+function sumOld(){const t=prod.filter(p=>p.date===today);
+ const tot=p=>p.items.reduce((a,x)=>a+x.n,0);
+ const rs=["Xamirkash","Zuvalakash"];
+ const gs=[...new Set(t.flatMap(p=>p.items.map(x=>x.g)))].sort((a,b)=>a-b);
+ const q=(r,g)=>t.filter(p=>p.role===r).reduce((a,p)=>a+p.items.filter(x=>x.g===g).reduce((b,x)=>b+x.n,0),0);
+ const T=r=>t.filter(p=>p.role===r).reduce((a,p)=>a+tot(p),0);
+ if(!t.length)return `<div class="m">Bugun hali hech kim kiritmagan.</div>`;
+ return `<div class="c"><table><tr><th>Gramm</th><th>Xamirkash</th><th>Zuvalakash</th></tr>`+gs.map(g=>`<tr><td>${g} gr</td><td>${q(rs[0],g)}</td><td>${q(rs[1],g)}</td></tr>`).join("")+`<tr><td><b>Jami</b></td><td><b>${T(rs[0])}</b></td><td><b>${T(rs[1])}</b></td></tr></table></div><h2>Xodimlar</h2><div class="c">`+t.map(p=>`<div class="r"><span style="color:var(--ink)"><b>${esc(p.name)}</b> <span class="m">${esc(p.role)}</span></span><b>${tot(p)} dona</b></div>`).join("")+`</div>`}
+const CATS=["Xamirkash-zuvalakash","Chekuvchi","Yopuvchi","Boshqa"];
+const fmt=n=>String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g," ");
+function expv(){const list=exps.filter(x=>me.role=="Egasi"?true:x.date===today&&(x.wid==me.id||x.to==me.id)).sort((a,b)=>b.date<a.date?-1:b.date>a.date?1:0).slice(0,60);
+ return `<div class="c" style="padding:12px">${me.role=="Egasi"?"":`<div style="font-weight:800;margin:2px 0 10px">${esc(CATS.includes(me.role)?me.role:CATS[0])}</div>`}<select id="ec" aria-label="Nimaga" style="width:100%;${me.role=="Egasi"?"":"display:none"}">${CATS.map(c=>`<option ${c==me.role?"selected":""}>${c}</option>`).join("")}</select><select id="et" aria-label="Kimga" style="width:100%;margin-top:8px;${me.role=="Egasi"?"":"display:none"}"><option value="">Kimga (ixtiyoriy)</option>${workers.filter(w=>w.role!="Egasi").map(w=>`<option value="${esc(w.id)}">${esc(w.name)}</option>`).join("")}</select><div class="add"><input id="ea" inputmode="numeric" placeholder="Summa" aria-label="Summa"><input id="en" placeholder="Kimga / izoh" aria-label="Izoh"></div><button class="p" data-act="adde">+ Xarajat qo’shish</button></div><h2>${me.role=="Egasi"?"Xarajatlar (oxirgi 60 ta)":"Bugungi xarajatlar"}</h2><div class="c">`+(list.length?list.map(x=>`<div class="r"><span style="color:var(--ink)"><b>${esc(x.cat)}</b> ${esc(x.note||"")}<br><small class="m">${esc(x.date)} · ${esc(x.name)}${x.to?" → "+esc((workers.find(w=>w.id==x.to)||{}).name||""):""}</small></span><b>${fmt(x.amount)}</b>${me.role=="Egasi"||x.wid==me.id?`<button data-act="delx" data-id="${esc(x.id)}" aria-label="O’chirish">×</button>`:""}</div>`).join(""):`<div class="r"><span>Hali yo’q</span></div>`)+`</div>`}
+function prv(){const gs=[...new Set([...SIZES,...prod.flatMap(p=>p.items.map(x=>x.g))])].sort((a,b)=>a-b);
+ return `<div class="m">Har bir non narxi (so’m)</div><div class="c" style="margin-top:8px">`+gs.map(g=>`<div class="r"><span style="color:var(--ink);font-weight:800">${g} gr</span><input class="pr" data-g="${g}" inputmode="numeric" value="${prices[g]||""}" placeholder="0" aria-label="Narx ${g} gr" style="width:110px"></div>`).join("")+`</div><button class="p" data-act="savep">Narxlarni saqlash</button>`}
+function money(){const t=prod.filter(p=>p.date===today&&p.role!="Egasi"),e=exps.filter(x=>x.date===today);
+ const rev=t.reduce((a,p)=>a+p.items.reduce((b,x)=>b+x.n*(prices[x.g]||0),0),0),ex=e.reduce((a,x)=>a+x.amount,0);
+ const byC={},byW={},byT={};e.forEach(x=>{byC[x.cat]=(byC[x.cat]||0)+x.amount;byW[x.name]=(byW[x.name]||0)+x.amount;if(x.to){const n=(workers.find(w=>w.id==x.to)||{}).name||"?";byT[n]=(byT[n]||0)+x.amount}});
+ const rows=o=>Object.entries(o).map(([k,v])=>`<div class="r"><span style="color:var(--ink)">${esc(k)}</span><b>${fmt(v)}</b></div>`).join("")||`<div class="r"><span>Yo’q</span></div>`;
+ return `<h2>Pul hisobi</h2><div class="c"><div class="r"><span style="color:var(--ink)">Tushum (narx × non soni)</span><b>${fmt(rev)}</b></div><div class="r"><span style="color:var(--ink)">Xarajat</span><b>${fmt(ex)}</b></div><div class="r"><span style="color:var(--ink)"><b>Foyda</b></span><b>${fmt(rev-ex)} so’m</b></div></div><h2>Nimaga ketdi</h2><div class="c">${rows(byC)}</div><h2>Kimga qancha berildi</h2><div class="c">${rows(byT)}</div><h2>Kim qancha xarajat qildi</h2><div class="c">${rows(byW)}</div>`}
+function wgv(){const ws=workers.filter(w=>w.role!="Egasi");
+ return `<div class="m">Kunlik ish haqi (so’m). Berilgach xodimning kunlik ro’yxati yangilanadi, egasida hammasi saqlanadi.</div><div class="c" style="margin-top:8px">`+(ws.length?ws.map(w=>{const paid=exps.filter(x=>x.date===today&&x.cat=="Ish haqi"&&x.to==w.id).reduce((a,x)=>a+x.amount,0),z=prod.filter(p=>p.date===today&&p.wid==w.id).reduce((a,p)=>a+p.items.reduce((b,x)=>b+x.n,0),0);
+  return `<div class="r" style="flex-wrap:wrap"><span style="color:var(--ink);flex:1 1 100%"><b>${esc(w.name)}</b> <span class="m">${esc(w.role)}${z?" · "+z+" zuvala":""}</span>${paid?`<br><small class="m">Bugun berildi: ${fmt(paid)}</small>`:""}</span><input class="wg" inputmode="numeric" placeholder="Summa" aria-label="Summa" style="flex:1;min-width:0;text-align:left;width:auto"><button data-act="pay" data-id="${esc(w.id)}" style="width:auto;padding:0 16px;background:var(--acc);color:#fff;border-color:var(--acc)">To’lash</button></div>`}).join(""):`<div class="r"><span>Xodim yo’q</span></div>`)+`</div>`}
+function stock(){const kir=flour.reduce((a,x)=>a+x.qop,0),used=prod.reduce((a,p)=>a+(p.qop||0),0);return {kir,used,left:kir-used}}
+function unv(){const s=stock();return `<div class="c" style="padding:20px;text-align:center"><div class="m">Qolgan un</div><div style="font-size:40px;font-weight:800;margin-top:6px">${s.left} qop</div><div class="m" style="margin-top:6px">Kirim ${s.kir} − ishlatilgan ${s.used}</div></div><h2>Un kirimi</h2><div class="c" style="padding:12px"><div class="add" style="margin-top:0"><input id="fq" inputmode="numeric" placeholder="Necha qop keldi" aria-label="Qop soni"></div><button class="p" data-act="addf">+ Kirim qo’shish</button></div><h2>Kirimlar</h2><div class="c">`+(flour.length?[...flour].sort((a,b)=>b.date<a.date?-1:b.date>a.date?1:0).slice(0,30).map(x=>`<div class="r"><span style="color:var(--ink)">${esc(x.date)}</span><b>+${x.qop} qop</b><button data-act="delf" data-id="${esc(x.id)}" aria-label="O’chirish">×</button></div>`).join(""):`<div class="r"><span>Hali yo’q</span></div>`)+`</div>`}
+function sumAll(){return (me.role=="Egasi"?`<div class="c" style="padding:14px 16px;display:flex;justify-content:space-between;margin-bottom:4px"><b>Qolgan un</b><b>${stock().left} qop</b></div>`:"")+sum()+(me.role=="Egasi"?money():"")}
+function render(){const v=$("#v");if(!me){v.innerHTML=login();return}v.innerHTML=head()+(tab=="enter"?enter():tab=="exp"?expv():tab=="pr"?prv():tab=="un"?unv():tab=="wg"?wgv():sumAll());calc()}
+function calc(){const e=$("#tot");if(e)e.textContent=items.reduce((a,x)=>a+(x.n||0),0)+" zuvala"}
+async function save(){const id=today+"_"+me.id;const o={date:today,wid:me.id,name:me.name,role:me.role,qop,items:items.filter(x=>x.g>0&&x.n>0)};
+ const i=prod.findIndex(p=>p.id==id);if(i<0)prod.push({id,...o});else prod[i]={id,...o};
+ try{if(db)await db.collection("prod").doc(id).set(o);toast("Saqlandi")}catch(e){toast("Saqlanmadi, qayta urining")}}
+document.addEventListener("click",async e=>{const b=e.target.closest("[data-act]");if(!b)return;const a=b.dataset.act;
+ if(a=="pick"){const w=workers.find(x=>x.id==b.dataset.id);if(w.role=="Egasi"){pend=w;render();return}me={id:w.id,name:w.name,role:w.role};try{localStorage.setItem("me",JSON.stringify(me))}catch(_){}tab=startTab();startItems();render()}
+ else if(a=="addw"){const n=$("#nm").value.trim();if(!n)return;const w={name:n,role:$("#rl").value};
+  try{if(db)await db.collection("workers").add(w);else{workers.push({id:"l"+Date.now(),...w});render()}}catch(_){toast("Qo’shilmadi")}}
+ else if(a=="out"){me=null;try{localStorage.removeItem("me")}catch(_){}render()}
+ else if(a=="tab"){tab=b.dataset.t;render()}
+ else if(a=="delr"){items.splice(+b.closest(".r").dataset.i,1);render()}
+ else if(a=="row"){items.push({g:0,n:0});render()}
+ else if(a=="inc"||a=="dec"){const r=b.closest(".r"),i=+r.dataset.i;items[i].n=Math.max(0,(items[i].n||0)+(a=="inc"?1:-1));r.querySelector(".n").value=items[i].n;calc()}
+ else if(a=="qi"||a=="qd"){qop=Math.max(0,qop+(a=="qi"?1:-1));$("#qop").value=qop}
+ else if(a=="pwno"){pend=null;render()}
+ else if(a=="pwok"){const p=$("#pw").value;if(p.length<4){toast("Kamida 4 ta belgi");return}if(!ownerReady){toast("Biroz kuting");return}const h=await sha(p);
+  if(!ownerH){try{if(db)await db.collection("meta").doc("owner").set({h});ownerH=h}catch(_){toast("Saqlanmadi");return}}
+  else if(h!==ownerH){toast("Parol noto’g’ri");return}
+  me={id:pend.id,name:pend.name,role:pend.role};pend=null;tab="sum";startItems();render()}
+ else if(a=="pay"){const r=b.closest(".r"),amt=parseInt(r.querySelector(".wg").value.replace(/\D/g,""))||0;if(!amt)return;const rec={date:today,cat:"Ish haqi",amount:amt,note:"Kunlik ish haqi",wid:me.id,name:me.name,to:b.dataset.id};
+  try{if(db)await db.collection("exp").add(rec);else{exps.push({id:"l"+Date.now(),...rec});render()}toast("Ish haqi berildi")}catch(_){toast("Saqlanmadi")}}
+ else if(a=="addf"){const q=parseInt($("#fq").value.replace(/\D/g,""))||0;if(!q)return;const rec={date:today,qop:q,name:me.name};try{if(db)await db.collection("flour").add(rec);else{flour.push({id:"l"+Date.now(),...rec});render()}toast("Qo’shildi")}catch(_){toast("Qo’shilmadi")}}
+ else if(a=="delf"){const id=b.dataset.id;try{if(db)await db.collection("flour").doc(id).delete();else{flour=flour.filter(x=>x.id!=id);render()}}catch(_){toast("O’chmadi")}}
+ else if(a=="adde"){const amt=parseInt($("#ea").value.replace(/\D/g,""))||0;if(!amt)return;const rec={date:today,cat:$("#ec").value,amount:amt,note:$("#en").value.trim(),wid:me.id,name:me.name,to:$("#et").value};
+  try{if(db)await db.collection("exp").add(rec);else{exps.push({id:"l"+Date.now(),...rec});render()}toast("Qo’shildi")}catch(_){toast("Qo’shilmadi")}}
+ else if(a=="delx"){const id=b.dataset.id;try{if(db)await db.collection("exp").doc(id).delete();else{exps=exps.filter(x=>x.id!=id);render()}}catch(_){toast("O’chmadi")}}
+ else if(a=="savep"){try{if(db)await db.collection("meta").doc("prices").set({m:prices});toast("Saqlandi")}catch(_){toast("Saqlanmadi")}}
+ else if(a=="save")save()});
+document.addEventListener("input",e=>{if(e.target.classList.contains("pr")){prices[e.target.dataset.g]=parseInt(e.target.value.replace(/\D/g,""))||0;return}if(e.target.id=="qop"){qop=parseInt(e.target.value.replace(/\D/g,""))||0;return}const r=e.target.closest(".r[data-i]");if(!r)return;const i=+r.dataset.i,v=parseInt(e.target.value.replace(/\D/g,""))||0;
+ if(e.target.classList.contains("g"))items[i].g=v;else if(e.target.classList.contains("n")){items[i].n=v;calc()}});
+render();
+(async()=>{try{firebase.initializeApp(FB);await firebase.auth().signInAnonymously();db=firebase.firestore()}catch(e){db=null}
+ if(!db){ownerReady=true;toast("Onlayn baza ulanmagan");return}
+ db.collection("workers").onSnapshot(s=>{workers=s.docs.map(d=>({id:d.id,...d.data()}));if(!me)render()});
+ db.collection("flour").onSnapshot(s=>{flour=s.docs.map(d=>({id:d.id,...d.data()}));if(me&&(tab=="un"||tab=="sum"))render()});
+ db.collection("meta").doc("owner").onSnapshot(s=>{ownerH=(s.data()||{}).h||null;ownerReady=true});
+ db.collection("exp").onSnapshot(s=>{exps=s.docs.map(d=>({id:d.id,...d.data()}));if(me&&(tab=="sum"||tab=="exp"||tab=="wg"))render()});
+ db.collection("meta").doc("prices").onSnapshot(s=>{prices=(s.data()||{}).m||{};if(me&&(tab=="sum"||tab=="pr"))render()});
+ db.collection("prod").onSnapshot(s=>{prod=s.docs.map(d=>({id:d.id,...d.data()}));if(me&&!items.length)startItems();if(!me||tab=="sum"||tab=="un")render()})})();
+if(me){tab=startTab();startItems()}
+</script></body></html>
