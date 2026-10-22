@@ -2,6 +2,9 @@
 <html lang="uz"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Nonvoyxona hisobi</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#9A5314">
+<link rel="icon" href="icon-192.png">
 <style>
 :root{--bg:#FBF6EE;--card:#fff;--ink:#2B1D12;--mut:#6B5A4A;--line:#E6D9C6;--acc:#9A5314;--in:#FBF6EE;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1D1610;--card:#2A2018;--ink:#F5EBDD;--mut:#BFAE9A;--line:#44362A;--acc:#E0914A;--in:#1D1610}}
@@ -131,4 +134,5 @@ render();
  db.collection("meta").doc("prices").onSnapshot(s=>{prices=(s.data()||{}).m||{};if(me&&(tab=="sum"||tab=="pr"))render()});
  db.collection("prod").onSnapshot(s=>{prod=s.docs.map(d=>({id:d.id,...d.data()}));if(me&&!items.length)startItems();if(!me||tab=="sum"||tab=="un")render()})})();
 if(me){tab=startTab();startItems()}
-</script></body></html>
+</script><script>if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})})}</script>
+</body></html>
