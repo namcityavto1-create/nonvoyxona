@@ -28,14 +28,8 @@ jobs:
           npx cap sync android
       - name: Icons
         run: |
-          cd android/app/src/main/res
-          rm -rf mipmap-anydpi-v26
-          for p in "mdpi 48" "hdpi 72" "xhdpi 96" "xxhdpi 144" "xxxhdpi 192"; do
-            set -- $p
-            convert "$GITHUB_WORKSPACE/icon-512.png" -resize ${2}x${2} mipmap-$1/ic_launcher.png
-            cp mipmap-$1/ic_launcher.png mipmap-$1/ic_launcher_round.png
-            rm -f mipmap-$1/ic_launcher_foreground.png
-          done
+          npm install sharp
+          node -e "const s=require('sharp'),fs=require('fs');const d={mdpi:48,hdpi:72,xhdpi:96,xxhdpi:144,xxxhdpi:192};const r='android/app/src/main/res/';fs.rmSync(r+'mipmap-anydpi-v26',{recursive:true,force:true});(async()=>{for(const k in d){const o=r+'mipmap-'+k+'/';await s('icon-512.png').resize(d[k],d[k]).toFile(o+'ic_launcher.png');await s('icon-512.png').resize(d[k],d[k]).toFile(o+'ic_launcher_round.png');fs.rmSync(o+'ic_launcher_foreground.png',{force:true})}})()"
       - name: Build APK
         run: |
           cd android
